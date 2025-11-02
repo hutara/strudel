@@ -1,13 +1,10 @@
 name: Deploy Strudel to GitHub Pages
 
 on:
-  # Trigger on push to main branch
   push:
     branches: [ main ]
-  # Allow manual trigger from Actions tab
   workflow_dispatch:
 
-# Permissions for GitHub Pages deployment
 permissions:
   contents: read
   pages: write
@@ -17,33 +14,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          # Fetch full history if needed for monorepo
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # Fix: Install pnpm اول (قبل از Node)
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4  # v4 برای 2025 (stable)
         with:
-          node-version: 20  # Node 20 for Astro 5.15+ and Strudel
-          cache: 'pnpm'  # Cache pnpm for monorepo speed
+          version: 9  # نسخه pnpm برای Strudel (از package.json)
 
-      - name: Install dependencies with pnpm
-        # Run in root for monorepo (pnpm-workspace.yaml)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'  # حالا pnpm در PATH است
+
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build Strudel site
-        # Build from website/ directory
         run: cd website && pnpm build
-        # Optional env for Strudel config
         env:
-          PUBLIC_BASE_PATH: '/strudel/'  # If needed for subpath
+          PUBLIC_BASE_PATH: '/strudel/'
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./website/dist  # Strudel build output
+          path: ./website/dist
 
   deploy:
     environment:
