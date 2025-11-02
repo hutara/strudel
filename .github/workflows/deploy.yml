@@ -1,3 +1,4 @@
+# .github/workflows/deploy.yml
 name: Deploy Strudel to GitHub Pages
 
 on:
@@ -16,25 +17,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fix: Install pnpm اول (قبل از Node)
+      # 1. Install pnpm
       - name: Install pnpm
-        uses: pnpm/action-setup@v4  # v4 برای 2025 (stable)
+        uses: pnpm/action-setup@v4
         with:
-          version: 9  # نسخه pnpm برای Strudel (از package.json)
+          version: 9
 
+      # 2. Setup Node (بدون cache تا lockfile درست بشه)
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'  # حالا pnpm در PATH است
+          # cache: 'pnpm'  ← موقتاً خاموش کن
 
+      # 3. Install در root (monorepo)
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # 4. Build
       - name: Build Strudel site
         run: cd website && pnpm build
         env:
           PUBLIC_BASE_PATH: '/strudel/'
 
+      # 5. Upload
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./website/dist
