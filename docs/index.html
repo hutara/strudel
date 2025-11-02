@@ -1,1269 +1,1079 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#010f0d">
-    <title>Strudel REPL - راهنمای لایوکدینگ موسیقی با </title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg-primary: #010f0d;
-            --bg-secondary: #020d0e;
-            --bg-card: #09161a;
-            --accent-cyan: #00ffff;
-            --accent-green: #00ff88;
-            --accent-purple: #f152ff;
-            --accent-pink: #ff0080;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --text-dim: #64748b;
-            --border: #273d49;
-            --code-bg: #0f2229;
-            --gradient-1: linear-gradient(135deg, #667eea 0%, hsl(305, 91%, 70%) 100%);
-            --gradient-2: linear-gradient(135deg, #00ffff 0%, #00ff88 100%);
-            --gradient-3: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%);
-        }
-
-        body {
-            font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.7;
-            overflow-x: hidden;
-            min-height: 100vh;
-            position: relative;
-            touch-action: pan-y;
-        }
-
-        /* Matrix Canvas */
-        #matrix-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.3;
-        }
-
-        .matrix-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(ellipse at center, 
-                        rgba(0,0,0,0.3) 0%, 
-                        rgba(0,0,0,0.7) 100%);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        header, nav, .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Progress Bar */
-        .progress-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 3px;
-            background: var(--gradient-2);
-            transition: width 0.3s ease;
-            z-index: 1000;
-        }
-
-        /* Header */
-        header {
-            padding: clamp(60px, 15vw, 100px) 20px clamp(40px, 10vw, 60px);
-            text-align: center;
-            background: linear-gradient(180deg, rgba(22, 37, 48, 0.8) 0%, var(--bg-primary) 100%);
-            overflow: hidden;
-        }
-
-        .hero-title {
-            font-size: clamp(2.2rem, 7vw, 4.5rem);
-            font-weight: 900;
-            background: var(--gradient-2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 16px;
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.5)); }
-            to { filter: drop-shadow(0 0 25px rgba(0, 255, 136, 0.8)); }
-        }
-
-        .hero-subtitle {
-            font-size: clamp(1rem, 3vw, 1.3rem);
-            color: var(--text-secondary);
-            max-width: 700px;
-            margin: 0 auto 32px;
-        }
-
-        .hero-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: var(--gradient-2);
-            color: var(--bg-primary);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--accent-cyan);
-            border: 2px solid var(--accent-cyan);
-        }
-
-        .btn-secondary:hover {
-            background: var(--accent-cyan);
-            color: var(--bg-primary);
-            transform: translateY(-3px);
-        }
-
-        /* Navigation */
-        nav {
-            position: sticky;
-            top: 0;
-            background: rgba(1, 17, 32, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
-            z-index: 999;
-            padding: 12px 0;
-        }
-
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            color: var(--accent-cyan);
-            font-weight: 700;
-            font-size: 1.4rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent-cyan);
-        }
-
-        /* Hamburger Menu */
-        .hamburger {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .hamburger span {
-            width: 25px;
-            height: 3px;
-            background: var(--accent-cyan);
-            border-radius: 3px;
-            transition: 0.3s;
-        }
-
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -6px);
-        }
-
-        /* Mobile Menu */
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 16px 20px;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 998;
-        }
-
-        .mobile-menu a {
-            color: var(--text-primary);
-            text-decoration: none;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
-            font-weight: 500;
-        }
-
-        .mobile-menu a:last-child {
-            border-bottom: none;
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: clamp(40px, 5vw, 60px) 20px;
-        }
-
-        /* Grid Layout */
-        .grid {
-            display: grid;
-            grid-template-columns: minmax(220px, 260px) 1fr;
-            gap: clamp(20px, 4vw, 40px);
-            margin-top: 32px;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: sticky;
-            top: 90px;
-            height: fit-content;
-            align-self: start;
-        }
-
-        .toc-toggle {
-            display: none;
-            background: var(--bg-card);
-            color: var(--accent-cyan);
-            border: 1px solid var(--border);
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            text-align: right;
-            margin-bottom: 16px;
-            gap: 8px;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .toc {
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 24px;
-            border: 1px solid var(--border);
-            display: block;
-        }
-
-        .toc-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .toc-list {
-            list-style: none;
-        }
-
-        .toc-list li {
-            margin-bottom: 8px;
-        }
-
-        .toc-list a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        .toc-list a:hover {
-            background: rgba(0, 255, 255, 0.1);
-            color: var(--accent-cyan);
-            transform: translateX(-4px);
-        }
-
-        .toc-list a.active {
-            background: rgba(0, 255, 255, 0.15);
-            color: var(--accent-cyan);
-            border-right: 3px solid var(--accent-cyan);
-        }
-
-        /* Content */
-        .content {
-            flex: 1;
-        }
-
-        .section {
-            background: var(--bg-card);
-            border-radius: 18px;
-            padding: clamp(24px, 5vw, 40px);
-            margin-bottom: 32px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 0.6s ease;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-2);
-            opacity: 0.8;
-        }
-
-        .section-title {
-            font-size: clamp(1.6rem, 4vw, 2rem);
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--accent-cyan);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-subtitle {
-            font-size: clamp(1.1rem, 3vw, 1.3rem);
-            font-weight: 600;
-            margin: 24px 0 12px;
-            color: var(--accent-green);
-        }
-
-        /* Cards */
-        .card {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-cyan);
-            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);
-        }
-
-        .card-title {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--accent-purple);
-            margin-bottom: 12px;
-        }
-
-        /* Code Blocks */
-        .code-container {
-            position: relative;
-            margin: 20px 0;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .code-header {
-            background: var(--bg-secondary);
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .code-title {
-            color: var(--accent-green);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .code-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .code-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.85rem;
-        }
-
-        .code-btn:hover {
-            background: var(--accent-cyan);
-            color: var(--bg-primary);
-            border-color: var(--accent-cyan);
-        }
-
-        pre {
-            background: var(--code-bg);
-            padding: 20px;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-            line-height: 1.6;
-            color: var(--text-primary);
-            margin: 0;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        code {
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 4px;
-            color: var(--text-primary);
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-        }
-
-        /* Tables */
-        .table-container {
-            overflow-x: auto;
-            margin: 20px 0;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            -webkit-overflow-scrolling: touch;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg-secondary);
-            min-width: 500px;
-        }
-
-        th {
-            background: var(--bg-primary);
-            color: var(--accent-cyan);
-            padding: 14px 12px;
-            text-align: right;
-            font-weight: 600;
-            border-bottom: 2px solid var(--border);
-            font-size: 0.9rem;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        tr:hover {
-            background: rgba(0, 255, 255, 0.05);
-        }
-
-        /* Lists */
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-list li {
-            padding: 16px 20px;
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            margin-bottom: 14px;
-            border-right: 4px solid var(--accent-green);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            font-size: 0.95rem;
-        }
-
-        .feature-list li:hover {
-            transform: translateX(-8px);
-            border-color: var(--accent-cyan);
-        }
-
-        .feature-list i {
-            color: var(--accent-green);
-            font-size: 1.2rem;
-            min-width: 24px;
-        }
-
-        /* Alert Boxes */
-        .alert {
-            padding: 18px;
-            border-radius: 12px;
-            margin: 20px 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            font-size: 0.95rem;
-        }
-
-        .alert-info {
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid var(--accent-cyan);
-        }
-
-        .alert-warning {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid #ffc107;
-        }
-
-        .alert-success {
-            background: rgba(0, 255, 136, 0.1);
-            border: 1px solid var(--accent-green);
-        }
-
-        .alert i {
-            font-size: 1.4rem;
-            margin-top: 2px;
-        }
-
-        /* Interactive Demo */
-        .interactive-demo {
-            background: var(--code-bg);
-            border: 2px solid var(--border);
-            border-radius: 15px;
-            padding: 24px;
-            margin: 28px 0;
-            text-align: center;
-        }
-
-        .demo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
-            gap: 6px;
-            max-width: 500px;
-            margin: 20px auto;
-            font-family: monospace;
-            font-size: 1.1rem;
-        }
-
-        .demo-cell {
-            aspect-ratio: 1;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-dim);
-        }
-
-        .demo-cell:hover {
-            background: rgba(0, 255, 255, 0.2);
-            color: var(--accent-cyan);
-            transform: scale(1.1);
-        }
-
-        .demo-cell.active {
-            background: var(--accent-cyan);
-            color: var(--bg-primary);
-            animation: pulse 0.5s ease;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        /* Footer */
-        footer {
-            background: var(--bg-secondary);
-            padding: clamp(50px, 10vw, 60px) 20px 30px;
-            margin-top: 80px;
-            border-top: 1px solid var(--border);
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 32px;
-        }
-
-        .footer-section h3 {
-            color: var(--accent-cyan);
-            margin-bottom: 16px;
-            font-size: 1.15rem;
-        }
-
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section li {
-            margin-bottom: 10px;
-        }
-
-        .footer-section a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        .footer-section a:hover {
-            color: var(--accent-cyan);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-
-        /* Floating Button */
-        .floating-btn {
-            position: fixed;
-            bottom: 24px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .btn-webapp {
-            background: var(--gradient-2);
-            color: var(--bg-primary);
-            padding: 12px 20px;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .btn-webapp:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.5);
-        }
-
-        .btn-webapp i {
-            font-size: 1.1rem;
-        }
-
-        /* Responsive Breakpoints */
-        @media (max-width: 1024px) {
-            .grid {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-
-            .sidebar {
-                position: static;
-            }
-
-            .toc-toggle {
-                display: flex;
-            }
-
-            .toc {
-                display: none;
-            }
-
-            .toc.open {
-                display: block;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hamburger {
-                display: flex;
-            }
-
-            .mobile-menu.open {
-                display: flex;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 100%;
-                max-width: 280px;
-                justify-content: center;
-            }
-
-            .code-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .code-actions {
-                margin-top: 8px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero-title {
-                font-size: 2.2rem;
-            }
-
-            .section {
-                padding: 20px;
-            }
-
-            .feature-list li {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-
-            .alert {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .floating-btn {
-                bottom: 16px;
-                right: 16px;
-            }
-
-            .btn-webapp {
-                padding: 10px 16px;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.6s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-cyan);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strudel REPL - راهنمای جامع لایوکدینگ موسیقی</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    /* ====================== ریست و متغیرها ====================== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #010f0d;
+      --bg-secondary: #020d0e;
+      --bg-card: #09161a;
+      --accent-cyan: #00ffff;
+      --accent-green: #00ff88;
+      --accent-purple: #f152ff;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-dim: #64748b;
+      --border: #273d49;
+      --code-bg: #0f2229;
+      --gradient-2: linear-gradient(135deg, #00ffff 0%, #00ff88 100%);
+    }
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+      min-height: 100vh;
+      touch-action: manipulation;
+    }
+
+    /* ====================== Matrix Background ====================== */
+    #matrix-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      opacity: 0.3;
+    }
+    .matrix-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ====================== Progress Bar ====================== */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: var(--gradient-2);
+      width: 0;
+      transition: width 0.3s ease;
+      z-index: 1000;
+    }
+
+    /* ====================== Header (Hero) - بهینه برای موبایل ====================== */
+    header {
+      padding: clamp(1.5rem, 6vw, 3rem) 1rem clamp(1rem, 4vw, 2rem);
+      text-align: center;
+      background: linear-gradient(180deg, rgba(22,37,48,0.9) 0%, var(--bg-primary) 100%);
+      position: relative;
+      z-index: 1;
+    }
+    .hero {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.8rem, 2.5vw, 1.2rem);
+    }
+    .hero-title {
+      font-size: clamp(1.8rem, 6vw, 3.2rem);
+      font-weight: 900;
+      background: var(--gradient-2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+      margin: 0;
+    }
+    .hero-subtitle {
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      color: var(--text-secondary);
+      max-width: 90%;
+      margin: 0 auto;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .hero-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.8rem, 2.5vw, 1rem);
+      width: 100%;
+      max-width: 400px;
+      align-items: center;
+    }
+    .btn {
+      padding: clamp(0.65rem, 2.2vw, 0.9rem) clamp(1.2rem, 4vw, 1.6rem);
+      border: none;
+      border-radius: 50px;
+      font-size: clamp(0.85rem, 2.2vw, 1rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-width: 140px;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 320px;
+    }
+    .btn-primary {
+      background: var(--gradient-2);
+      color: var(--bg-primary);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,255,255,0.3);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-cyan);
+      border: 2px solid var(--accent-cyan);
+    }
+    .btn-secondary:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-primary);
+      transform: translateY(-2px);
+    }
+
+    /* ====================== Navigation ====================== */
+    nav {
+      position: sticky;
+      top: 0;
+      background: rgba(1,17,32,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 999;
+      padding: clamp(0.6rem, 1.2vw, 0.8rem) 0;
+    }
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-logo {
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    }
+    .nav-links {
+      display: flex;
+      gap: clamp(1rem, 2vw, 1.6rem);
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+      transition: color 0.3s;
+    }
+    .nav-links a:hover {
+      color: var(--accent-cyan);
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 0.4rem;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    .hamburger span {
+      width: 24px;
+      height: 2px;
+      background: var(--accent-cyan);
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(7px, -6px); }
+    .mobile-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      z-index: 998;
+      flex-direction: column;
+      gap: 0.5rem;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .mobile-menu.open {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .mobile-menu a {
+      color: var(--text-primary);
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+    .mobile-menu a:last-child { border-bottom: none; }
+
+    /* ====================== Container & Grid ====================== */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: clamp(1.5rem, 4vw, 2.5rem) 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 260px) 1fr;
+      gap: clamp(1.5rem, 3vw, 2.5rem);
+      margin-top: 1.5rem;
+    }
+
+    /* ====================== Sidebar ====================== */
+    .sidebar {
+      position: sticky;
+      top: 5rem;
+      align-self: start;
+    }
+    .toc-toggle {
+      display: none;
+      background: var(--bg-card);
+      color: var(--accent-cyan);
+      border: 1px solid var(--border);
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+    .toc {
+      background: var(--bg-card);
+      border-radius: 15px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toc-list {
+      list-style: none;
+    }
+    .toc-list li {
+      margin-bottom: 0.5rem;
+    }
+    .toc-list a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+    .toc-list a:hover {
+      background: rgba(0,255,255,0.1);
+      color: var(--accent-cyan);
+      transform: translateX(-0.25rem);
+    }
+    .toc-list a.active {
+      background: rgba(0,255,255,0.15);
+      color: var(--accent-cyan);
+      border-right: 3px solid var(--accent-cyan);
+    }
+
+    /* ====================== Content Sections ====================== */
+    .content {
+      flex: 1;
+    }
+    .section {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: clamp(1.5rem, 3.5vw, 2.5rem);
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient-2);
+      opacity: 0.8;
+    }
+    .section-title {
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .section-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-weight: 600;
+      margin: 1.5rem 0 0.8rem;
+      color: var(--accent-green);
+    }
+
+    /* ====================== Alert Boxes ====================== */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      padding: 1rem;
+      border-radius: 12px;
+      margin: 1rem 0;
+      font-size: clamp(0.9rem, 2.2vw, 1rem);
+    }
+    .alert i {
+      font-size: 1.3rem;
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+    .alert-info {
+      background: rgba(0,255,255,0.1);
+      border: 1px solid var(--accent-cyan);
+    }
+    .alert-success {
+      background: rgba(0,255,136,0.1);
+      border: 1px solid var(--accent-green);
+    }
+
+    /* ====================== Code Blocks ====================== */
+    .code-container {
+      margin: 1.2rem 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .code-header {
+      background: var(--bg-secondary);
+      padding: 0.8rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .code-title {
+      color: var(--accent-green);
+      font-weight: 500;
+    }
+    .code-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .code-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .code-btn:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-primary);
+      border-color: var(--accent-cyan);
+    }
+    pre {
+      background: var(--code-bg);
+      border-radius: 0 0 12px 12px;
+      margin: 0;
+      padding: 1.2rem;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+      line-height: 1.5;
+      color: var(--text-primary);
+      direction: ltr;
+    }
+    code {
+      font-family: 'Courier New', monospace;
+      background: rgba(0,0,0,0.2);
+      color: var(--accent-green);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    /* ====================== Tables ====================== */
+    .table-container {
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-secondary);
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+    }
+    th, td {
+      padding: 0.8rem 1rem;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: var(--bg-primary);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+    tr:hover {
+      background: rgba(0,255,255,0.05);
+    }
+
+    /* ====================== Cards & Lists ====================== */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      margin: 1rem 0;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent-purple);
+      margin-bottom: 0.8rem;
+    }
+    .feature-list {
+      list-style: none;
+    }
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      border-right: 4px solid var(--accent-green);
+      transition: all 0.3s;
+    }
+    .feature-list li:hover {
+      border-color: var(--accent-cyan);
+      transform: translateX(-0.5rem);
+    }
+    .feature-list i {
+      color: var(--accent-green);
+      font-size: 1.2rem;
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+
+    /* ====================== Floating Button ====================== */
+    .floating-btn {
+      position: fixed;
+      bottom: 1.2rem;
+      right: 1rem;
+      z-index: 1000;
+    }
+    .btn-webapp {
+      background: var(--gradient-2);
+      color: var(--bg-primary);
+      padding: 0.75rem 1.2rem;
+      border-radius: 50px;
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 4px 15px rgba(0,255,255,0.3);
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+    .btn-webapp:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,255,255,0.5);
+    }
+
+    /* ====================== Footer ====================== */
+    footer {
+      background: var(--bg-secondary);
+      padding: clamp(2rem, 5vw, 3rem) 1rem 1rem;
+      margin-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+    .footer-section h3 {
+      color: var(--accent-cyan);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .footer-section ul {
+      list-style: none;
+    }
+    .footer-section li {
+      margin-bottom: 0.5rem;
+    }
+    .footer-section a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+    .footer-section a:hover {
+      color: var(--accent-cyan);
+    }
+    .footer-bottom {
+      text-align: center;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    /* ====================== Responsive ====================== */
+    @media (max-width: 1024px) {
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      .sidebar {
+        position: static;
+      }
+      .toc-toggle {
+        display: flex;
+      }
+      .toc {
+        display: none;
+      }
+      .toc.open {
+        display: block;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn {
+        width: 100%;
+        max-width: 100%;
+      }
+      .hero-title {
+        font-size: clamp(1.8rem, 6vw, 2.8rem);
+      }
+      .section {
+        padding: 1.5rem;
+      }
+      .floating-btn {
+        bottom: 1rem;
+        right: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: clamp(1.6rem, 5.5vw, 2.4rem);
+      }
+      .hero-subtitle {
+        font-size: 0.95rem;
+      }
+      .section {
+        padding: 1.2rem;
+      }
+      .btn-webapp {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+      }
+      .feature-list li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .alert {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .code-btn {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+      }
+    }
+
+    /* ====================== Scrollbar ====================== */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-cyan);
+    }
+  </style>
 </head>
 <body>
-    <!-- Matrix Background Canvas -->
-    <canvas id="matrix-bg"></canvas>
-    
-    <!-- Optional Overlay -->
-    <div class="matrix-overlay"></div>
+  <!-- Matrix Background -->
+  <canvas id="matrix-bg"></canvas>
+  <div class="matrix-overlay"></div>
 
-    <!-- Progress Bar -->
-    <div class="progress-bar" id="progressBar"></div>
+  <!-- Progress Bar -->
+  <div class="progress-bar" id="progressBar"></div>
 
-    <!-- Header -->
-    <header>
-        <h1 class="hero-title">Strudel REPL</h1>
-        <p class="hero-subtitle">زبان لایوکدینگ موسیقی مبتنی بر Patternهای جاوااسکریپت و Web Audio</p>
-        <div class="hero-buttons">
-            <a href="#getting-started" class="btn btn-primary">
-                <i class="fas fa-rocket"></i>
-                شروع سریع
-            </a>
-            <a href="https://strudel.cc" target="_blank" class="btn btn-secondary">
-                <i class="fas fa-globe"></i>
-                وب‌سایت رسمی
-            </a>
+  <!-- Header -->
+  <header>
+    <div class="hero">
+      <h1 class="hero-title">Strudel REPL</h1>
+      <p class="hero-subtitle">زبان لایوکدینگ موسیقی مبتنی بر Patternهای جاوااسکریپت و Web Audio</p>
+      <div class="hero-buttons">
+        <a href="#getting-started" class="btn btn-primary">
+          <i class="fas fa-rocket"></i>
+          شروع سریع
+        </a>
+        <a href="https://strudel.cc" target="_blank" class="btn btn-secondary">
+          <i class="fas fa-globe"></i>
+          وب‌سایت رسمی
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="nav-logo">Strudel</div>
+      <ul class="nav-links">
+        <li><a href="#getting-started">شروع</a></li>
+        <li><a href="#patterns">پترن‌ها</a></li>
+        <li><a href="#functions">توابع</a></li>
+        <li><a href="#examples">مثال‌ها</a></li>
+        <li><a href="#resources">منابع</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#getting-started">شروع</a>
+      <a href="#patterns">پترن‌ها</a>
+      <a href="#functions">توابع</a>
+      <a href="#examples">مثال‌ها</a>
+      <a href="#resources">منابع</a>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container">
+    <div class="grid">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <button class="toc-toggle" id="tocToggle">
+          <span>فهرست مطالب</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="toc" id="toc">
+          <h3 class="toc-title">
+            <i class="fas fa-list"></i>
+            فهرست مطالب
+          </h3>
+          <ul class="toc-list">
+            <li><a href="#getting-started"><i class="fas fa-circle"></i> شروع با Strudel</a></li>
+            <li><a href="#interface"><i class="fas fa-desktop"></i> رابط کاربری</a></li>
+            <li><a href="#patterns"><i class="fas fa-wave-square"></i> پترن‌های اصلی</a></li>
+            <li><a href="#stack"><i class="fas fa-layer-group"></i> Stack و ترکیب</a></li>
+            <li><a href="#euclid"><i class="fas fa-drum"></i> Euclidean Rhythms</a></li>
+            <li><a href="#synth"><i class="fas fa-wave-square"></i> سینتی‌سایزرها</a></li>
+            <li><a href="#effects"><i class="fas fa-sliders"></i> افکت‌ها</a></li>
+            <li><a href="#examples"><i class="fas fa-play-circle"></i> مثال‌های پیشرفته</a></li>
+            <li><a href="#resources"><i class="fas fa-book"></i> منابع بیشتر</a></li>
+          </ul>
         </div>
-    </header>
+      </aside>
 
-    <!-- Navigation -->
-    <nav>
-        <div class="nav-container">
-            <div class="nav-logo">
-                <span>Strudel</span>
+      <!-- Content -->
+      <main class="content">
+        <!-- Getting Started -->
+        <section id="getting-started" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-rocket"></i>
+            مرحله ۱: شروع با Strudel REPL
+          </h2>
+
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+              <strong>Strudel چیست؟</strong><br>
+              Strudel یک محیط لایوکدینگ موسیقی مبتنی بر وب است که از الگوی TidalCycles الهام گرفته و با جاوااسکریپت و Web Audio کار می‌کند. بدون نیاز به نصب، مستقیماً در مرورگر اجرا می‌شود.
             </div>
-            <ul class="nav-links">
-                <li><a href="#getting-started">شروع</a></li>
-                <li><a href="#patterns">پترن‌ها</a></li>
-                <li><a href="#functions">توابع</a></li>
-                <li><a href="#examples">مثال‌ها</a></li>
-                <li><a href="#resources">منابع</a></li>
-            </ul>
-            <div class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-        <div class="mobile-menu" id="mobileMenu">
-            <a href="#getting-started">شروع</a>
-            <a href="#patterns">پترن‌ها</a>
-            <a href="#functions">توابع</a>
-            <a href="#examples">مثال‌ها</a>
-            <a href="#resources">منابع</a>
-        </div>
-    </nav>
+          </div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="grid">
-            <!-- Sidebar -->
-            <aside class="sidebar">
-                <button class="toc-toggle" id="tocToggle">
-                    <span>فهرست مطالب</span>
-                    <i class="fas fa-chevron-down"></i>
+          <h3 class="section-subtitle">دسترسی آنلاین</h3>
+          <div style="text-align: center; margin: 2rem 0;">
+            <a href="https://hutara-strudel.vercel.app/#JDogbm90ZSgiPGMzIGViIGczIGJiPio0Iikuc291bmQoInNpbmUiKSAgCiAgLmNwcygxLjUpIC8vQlBNCiAgCiAgLmJwZihwZXJsaW4ucmFuZ2UoMzAwLDIwMDApLnNsb3coMTYpKQogIC5hZHNyKCIuMSIpCiAgLnBkZWNheSgiPDAgLjEgLjI1IC41PiIpCiAgLmZtKCI8MyAxPiIpLmZhc3QoMikuZm1oKCI8MC41IDEgMiA0IDYgOCA3IDUgMyAxID4iKQogIC5kZWxheSgwLjUpLmRlbGF5dGltZSguMjUpCiAgLmp1eEJ5KC41LHJldikKICAvLy5zb21ldGltZXMoYWRkKG5vdGUoMikpKQogIC8vLnBlbnYoMTIpLnBhbmNob3IoIjwwIC41IDEgLjU%2BKjIiKQogIC5yb29tKDEpLnJscCg1MDAwKS5yZmFkZSguMjUpCiAgCiAgLl9zY29wZSgpLl9waXRjaHdoZWVsKCkuc3BpcmFsKHsgc3RlYWR5OiAuOTYgfSk%3D" target="_blank" class="btn btn-primary">
+              <i class="fas fa-globe"></i>
+              Strudel WebApp
+            </a>
+          </div>
+
+          <h3 class="section-subtitle">شروع سریع</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">اولین پترن</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
                 </button>
-                <div class="toc" id="toc">
-                    <h3 class="toc-title">
-                        <i class="fas fa-list"></i>
-                        فهرست مطالب
-                    </h3>
-                    <ul class="toc-list">
-                        <li><a href="#getting-started"><i class="fas fa-circle"></i> شروع با Strudel</a></li>
-                        <li><a href="#interface"><i class="fas fa-circle"></i> رابط کاربری</a></li>
-                        <li><a href="#patterns"><i class="fas fa-circle"></i> پترن‌های اصلی</a></li>
-                        <li><a href="#stack"><i class="fas fa-circle"></i> Stack و ترکیب</a></li>
-                        <li><a href="#euclid"><i class="fas fa-circle"></i> Euclidean Rhythms</a></li>
-                        <li><a href="#synth"><i class="fas fa-circle"></i> سینتی‌سایزرها</a></li>
-                        <li><a href="#effects"><i class="fas fa-circle"></i> افکت‌ها</a></li>
-                        <li><a href="#examples"><i class="fas fa-circle"></i> مثال‌های پیشرفته</a></li>
-                        <li><a href="#resources"><i class="fas fa-circle"></i> منابع بیشتر</a></li>
-                    </ul>
-                </div>
-            </aside>
-
-            <!-- Content -->
-            <main class="content">
-                <!-- Getting Started -->
-                <section id="getting-started" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-rocket"></i>
-                        مرحله ۱: شروع با Strudel REPL
-                    </h2>
-
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <div>
-                            <strong>Strudel چیست؟</strong><br>
-                            Strudel یک محیط لایوکدینگ موسیقی مبتنی بر وب است که از الگوی TidalCycles الهام گرفته و با جاوااسکریپت و Web Audio کار می‌کند. بدون نیاز به نصب، مستقیماً در مرورگر اجرا می‌شود.
-                        </div>
-                    </div>
-
-                    <h3 class="section-subtitle">دسترسی آنلاین</h3>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="https://hutara-strudel.vercel.app/#JDogbm90ZSgiPGMzIGViIGczIGJiPio0Iikuc291bmQoInNpbmUiKSAgCiAgLmNwcygxLjUpIC8vQlBNCiAgCiAgLmJwZihwZXJsaW4ucmFuZ2UoMzAwLDIwMDApLnNsb3coMTYpKQogIC5hZHNyKCIuMSIpCiAgLnBkZWNheSgiPDAgLjEgLjI1IC41PiIpCiAgLmZtKCI8MyAxPiIpLmZhc3QoMikuZm1oKCI8MC41IDEgMiA0IDYgOCA3IDUgMyAxID4iKQogIC5kZWxheSgwLjUpLmRlbGF5dGltZSguMjUpCiAgLmp1eEJ5KC41LHJldikKICAvLy5zb21ldGltZXMoYWRkKG5vdGUoMikpKQogIC8vLnBlbnYoMTIpLnBhbmNob3IoIjwwIC41IDEgLjU%2BKjIiKQogIC5yb29tKDEpLnJscCg1MDAwKS5yZmFkZSguMjUpCiAgCiAgLl9zY29wZSgpLl9waXRjaHdoZWVsKCkuc3BpcmFsKHsgc3RlYWR5OiAuOTYgfSk%3D" target="_blank" class="btn btn-primary">
-                            <i class="fas fa-globe"></i>
-                            Strudel WebApp
-                        </a>
-                    </div>
-
-                    <h3 class="section-subtitle">شروع سریع</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">اولین پترن</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>// پخش نت C4 هر نیم‌ثانیه
+              </div>
+            </div>
+            <pre><code>// پخش نت C4 هر نیم‌ثانیه
 note("c4").sound("piano")</code></pre>
-                    </div>
+          </div>
 
-                    <div class="alert alert-success">
-                        <i class="fas fa-lightbulb"></i>
-                        <div>
-                            <strong>نکته:</strong> از <code>Ctrl+Enter</code> برای اجرای کد و <code>Ctrl+.</code> برای توقف استفاده کنید.
-                        </div>
-                    </div>
-                </section>
+          <div class="alert alert-success">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+              <strong>نکته:</strong> از <code>Ctrl+Enter</code> برای اجرای کد و <code>Ctrl+.</code> برای توقف استفاده کنید.
+            </div>
+          </div>
+        </section>
 
-                <!-- Interface -->
-                <section id="interface" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-desktop"></i>
-                        مرحله ۲: آشنایی با رابط کاربری
-                    </h2>
+        <!-- Interface -->
+        <section id="interface" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-desktop"></i>
+            مرحله ۲: آشنایی با رابط کاربری
+          </h2>
 
-                    <div class="interactive-demo">
-                        <h3 style="color: var(--accent-green); margin-bottom: 20px;">محیط Strudel</h3>
-                        <p style="color: var(--text-secondary); text-align: center;">
-                            ویرایشگر کد | دکمه Play | اسلایدر BPM | لیست نمونه‌ها
-                        </p>
-                    </div>
+          <div class="interactive-demo">
+            <h3 style="color: var(--accent-green); margin-bottom: 1rem;">محیط Strudel</h3>
+            <p style="color: var(--text-secondary); text-align: center;">
+              ویرایشگر کد | دکمه Play | اسلایدر BPM | لیست نمونه‌ها
+            </p>
+          </div>
 
-                    <h3 class="section-subtitle">کلیدهای میانبر</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>کلید</th>
-                                    <th>عملکرد</th>
-                                    <th>توضیحات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><code>Ctrl+Enter</code></td>
-                                    <td>اجرای کد</td>
-                                    <td>شروع پخش پترن</td>
-                                </tr>
-                                <tr>
-                                    <td><code>Ctrl+.</code></td>
-                                    <td>توقف</td>
-                                    <td>متوقف کردن تمام صداها</td>
-                                </tr>
-                                <tr>
-                                    <td><code>Ctrl+S</code></td>
-                                    <td>ذخیره</td>
-                                    <td>ذخیره به عنوان gist</td>
-                                </tr>
-                                <tr>
-                                    <td><code>Ctrl+L</code></td>
-                                    <td>بارگذاری</td>
-                                    <td>بارگذاری از gist</td>
-                                </tr>
-                                <tr>
-                                    <td><code>Ctrl+/</code></td>
-                                    <td>کامنت</td>
-                                    <td>کامنت کردن خط</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+          <h3 class="section-subtitle">کلیدهای میانبر</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>کلید</th>
+                  <th>عملکرد</th>
+                  <th>توضیحات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>Ctrl+Enter</code></td>
+                  <td>اجرای کد</td>
+                  <td>شروع پخش پترن</td>
+                </tr>
+                <tr>
+                  <td><code>Ctrl+.</code></td>
+                  <td>توقف</td>
+                  <td>متوقف کردن تمام صداها</td>
+                </tr>
+                <tr>
+                  <td><code>Ctrl+S</code></td>
+                  <td>ذخیره</td>
+                  <td>ذخیره به عنوان gist</td>
+                </tr>
+                <tr>
+                  <td><code>Ctrl+L</code></td>
+                  <td>بارگذاری</td>
+                  <td>بارگذاری از gist</td>
+                </tr>
+                <tr>
+                  <td><code>Ctrl+/</code></td>
+                  <td>کامنت</td>
+                  <td>کامنت کردن خط</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-                <!-- Patterns -->
-                <section id="patterns" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-wave-square"></i>
-                        مرحله ۳: پترن‌های اصلی
-                    </h2>
+        <!-- Patterns -->
+        <section id="patterns" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-wave-square"></i>
+            مرحله ۳: پترن‌های اصلی
+          </h2>
 
-                    <h3 class="section-subtitle">پترن‌های ساده</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">sequence</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>// پخش متوالی نت‌ها
+          <h3 class="section-subtitle">پترن‌های ساده</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">sequence</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>// پخش متوالی نت‌ها
 note("c4 d4 e4 f4")</code></pre>
-                    </div>
+          </div>
 
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">fast / slow</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>// سرعت ۴ برابر
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">fast / slow</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>// سرعت ۴ برابر
 note("c4").fast(4)
 
 // سرعت نصف
 note("c4").slow(2)</code></pre>
-                    </div>
+          </div>
 
-                    <h3 class="section-subtitle">پترن‌های تصادفی</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">rand / choose</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>// عدد تصادفی بین 0-1
+          <h3 class="section-subtitle">پترن‌های تصادفی</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">rand / choose</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>// عدد تصادفی بین 0-1
 rand.range(0,1)
 
 // انتخاب تصادفی از لیست
 choose(["c4","eb4","g4"])</code></pre>
-                    </div>
-                </section>
+          </div>
+        </section>
 
-                <!-- Stack -->
-                <section id="stack" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-layer-group"></i>
-                        مرحله ۴: ترکیب با Stack
-                    </h2>
+        <!-- Stack -->
+        <section id="stack" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-layer-group"></i>
+            مرحله ۴: ترکیب با Stack
+          </h2>
 
-                    <div class="alert alert-success">
-                        <i class="fas fa-lightbulb"></i>
-                        <div>
-                            <strong>نکته:</strong> از <code>stack()</code> برای پخش همزمان چند پترن استفاده کنید.
-                        </div>
-                    </div>
+          <div class="alert alert-success">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+              <strong>نکته:</strong> از <code>stack()</code> برای پخش همزمان چند پترن استفاده کنید.
+            </div>
+          </div>
 
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">ملودی + بیس + درام</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>stack(
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">ملودی + بیس + درام</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>stack(
   note("c4 eb4 g4 bb4").sound("piano"),
   note("c2").sound("sawtooth").lpf(300),
   s("bd hh sd hh").fast(2)
 )</code></pre>
-                    </div>
-                </section>
+          </div>
+        </section>
 
-                <!-- Euclidean -->
-                <section id="euclid" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-drum"></i>
-                        مرحله ۵: Euclidean Rhythms
-                    </h2>
+        <!-- Euclidean -->
+        <section id="euclid" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-drum"></i>
+            مرحله ۵: Euclidean Rhythms
+          </h2>
 
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">euclid(3,8)</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>// 3 ضربه در 8 قدم
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">euclid(3,8)</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>// 3 ضربه در 8 قدم
 s("bd").euclid(3,8)
 
 // با چرخش
 note("c3").euclidRot(3,16,14)</code></pre>
-                    </div>
+          </div>
 
-                    <h3 class="section-subtitle">جدول Euclidean</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>پترن</th>
-                                    <th>hits</th>
-                                    <th>steps</th>
-                                    <th>نتیجه</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><code>euclid(3,8)</code></td>
-                                    <td>3</td>
-                                    <td>8</td>
-                                    <td>*--*--*-</td>
-                                </tr>
-                                <tr>
-                                    <td><code>euclid(5,8)</code></td>
-                                    <td>5</td>
-                                    <td>8</td>
-                                    <td>*-*--*-*</td>
-                                </tr>
-                                <tr>
-                                    <td><code>euclid(4,7)</code></td>
-                                    <td>4</td>
-                                    <td>7</td>
-                                    <td>*--*--*-</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+          <h3 class="section-subtitle">جدول Euclidean</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>پترن</th>
+                  <th>hits</th>
+                  <th>steps</th>
+                  <th>نتیجه</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>euclid(3,8)</code></td>
+                  <td>3</td>
+                  <td>8</td>
+                  <td>*--*--*-</td>
+                </tr>
+                <tr>
+                  <td><code>euclid(5,8)</code></td>
+                  <td>5</td>
+                  <td>8</td>
+                  <td>*-*--*-*</td>
+                </tr>
+                <tr>
+                  <td><code>euclid(4,7)</code></td>
+                  <td>4</td>
+                  <td>7</td>
+                  <td>*--*--*-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-                <!-- Synth -->
-                <section id="synth" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-wave-square"></i>
-                        مرحله ۶: سینتی‌سایزرها و صداها
-                    </h2>
+        <!-- Synth -->
+        <section id="synth" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-wave-square"></i>
+            مرحله ۶: سینتی‌سایزرها و صداها
+          </h2>
 
-                    <h3 class="section-subtitle">سینتی‌سایزرهای داخلی</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">sawtooth , Sine , square, triangle</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>note("c4 eb4 g4").sound("sawtooth")
+          <h3 class="section-subtitle">سینتی‌سایزرهای داخلی</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">sawtooth , Sine , square, triangle</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>note("c4 eb4 g4").sound("sawtooth")
   .lpf(800).gain(0.7)
 
 note("c3").sound("square")
   .delay(0.3).delaytime(0.25)</code></pre>
-                    </div>
+          </div>
 
-                    <h3 class="section-subtitle">نمونه‌های صوتی</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">drum samples</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>s("bd hh sd hh").bank("RolandTR909")
+          <h3 class="section-subtitle">نمونه‌های صوتی</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">drum samples</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>s("bd hh sd hh").bank("RolandTR909")
 s("korg:3").fast(2)</code></pre>
-                    </div>
-                </section>
+          </div>
+        </section>
 
-                <!-- Effects -->
-                <section id="effects" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-sliders"></i>
-                        مرحله ۷: افکت‌ها و پردازش
-                    </h2>
+        <!-- Effects -->
+        <section id="effects" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-sliders"></i>
+            مرحله ۷: افکت‌ها و پردازش
+          </h2>
 
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>افکت</th>
-                                    <th>پارامترها</th>
-                                    <th>مثال</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><code>.delay()</code></td>
-                                    <td>gain, time</td>
-                                    <td><code>.delay(0.5).delaytime(0.25)</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>.reverb()</code></td>
-                                    <td>room, damp</td>
-                                    <td><code>.reverb(3)</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>.lpf()</code></td>
-                                    <td>freq, q</td>
-                                    <td><code>.lpf(800)</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code>.hpf()</code></td>
-                                    <td>freq</td>
-                                    <td><code>.hpf(2000)</code></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>افکت</th>
+                  <th>پارامترها</th>
+                  <th>مثال</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>.delay()</code></td>
+                  <td>gain, time</td>
+                  <td><code>.delay(0.5).delaytime(0.25)</code></td>
+                </tr>
+                <tr>
+                  <td><code>.reverb()</code></td>
+                  <td>room, damp</td>
+                  <td><code>.reverb(3)</code></td>
+                </tr>
+                <tr>
+                  <td><code>.lpf()</code></td>
+                  <td>freq, q</td>
+                  <td><code>.lpf(800)</code></td>
+                </tr>
+                <tr>
+                  <td><code>.hpf()</code></td>
+                  <td>freq</td>
+                  <td><code>.hpf(2000)</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-                <!-- Examples -->
-                <section id="examples" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-play-circle"></i>
-                        مرحله ۸: مثال‌های پیشرفته
-                    </h2>
+        <!-- Examples -->
+        <section id="examples" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-play-circle"></i>
+            مرحله ۸: مثال‌های پیشرفته
+          </h2>
 
-                    <h3 class="section-subtitle">مثال ۱: تکنو مینیمال</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">minimal_techno.strudel</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>setBPM(130)
+          <h3 class="section-subtitle">مثال ۱: تکنو مینیمال</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">minimal_techno.strudel</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>setBPM(130)
 
 stack(
   s("bd").euclid(3,8),
@@ -1271,19 +1081,19 @@ stack(
   note("<c2 eb2>/4").sound("sawtooth").lpf(400),
   note("c4 eb4 g4 bb4".slow(4)).sound("triangle").delay(.4)
 )</code></pre>
-                    </div>
+          </div>
 
-                    <h3 class="section-subtitle">مثال ۲: IDM پیچیده</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">idm_glitch.strudel</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>setBPM(170)
+          <h3 class="section-subtitle">مثال ۲: IDM پیچیده</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">idm_glitch.strudel</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>setBPM(170)
 
 stack(
   s("bd:2").euclid(5,16),
@@ -1291,368 +1101,241 @@ stack(
   note("<c3 eb3 g3 bb3>/2").sound("fm").cutoff(sine.range(400,4000)),
   s("glitch:0").room(2).fast(rand.range(1,8))
 )</code></pre>
-                    </div>
+          </div>
 
-                    <h3 class="section-subtitle">مثال ۳: Ambient Drone</h3>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span class="code-title">ambient_drone.strudel</span>
-                            <div class="code-actions">
-                                <button class="code-btn" onclick="copyCode(this)">
-                                    <i class="fas fa-copy"></i> کپی
-                                </button>
-                            </div>
-                        </div>
-                        <pre><code>setBPM(60)
+          <h3 class="section-subtitle">مثال ۳: Ambient Drone</h3>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-title">ambient_drone.strudel</span>
+              <div class="code-actions">
+                <button class="code-btn" onclick="copyCode(this)">
+                  <i class="fas fa-copy"></i> کپی
+                </button>
+              </div>
+            </div>
+            <pre><code>setBPM(60)
 
 stack(
   note("<c2 eb2 g2>/8").sound("sawtooth").lpf(200).gain(.8),
   note("<c4 eb4 g4 bb4>".slow(16)).sound("sine").reverb(5).gain(.3),
   s("~ noise").hpf(8000).gain(.1).delay(.7)
 ).room(3)</code></pre>
-                    </div>
-                </section>
+          </div>
+        </section>
 
-                <!-- Resources -->
-                <section id="resources" class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-book"></i>
-                        منابع و لینک‌های مفید
-                    </h2>
+        <!-- Resources -->
+        <section id="resources" class="section">
+          <h2 class="section-title">
+            <i class="fas fa-book"></i>
+            منابع و لینک‌های مفید
+          </h2>
 
-                    <div class="card">
-                        <h4 class="card-title">مستندات رسمی</h4>
-                        <ul class="feature-list">
-                            <li>
-                                <i class="fas fa-globe"></i>
-                                <div>
-                                    <a href="https://strudel.cc/learn" target="_blank">آموزش رسمی Strudel</a><br>
-                                    <span style="color: var(--text-dim);">راهنمای کامل با مثال‌های تعاملی</span>
-                                </div>
-                            </li>
-                            <li>
-                                <i class="fab fa-github"></i>
-                                <div>
-                                    <a href="https://github.com/tidalcycles/strudel" target="_blank">مخزن GitHub</a><br>
-                                    <span style="color: var(--text-dim);">سورس کد و گزارش باگ</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+          <div class="card">
+            <h4 class="card-title">مستندات رسمی</h4>
+            <ul class="feature-list">
+              <li>
+                <i class="fas fa-globe"></i>
+                <div>
+                  <a href="https://strudel.cc/learn" target="_blank">آموزش رسمی Strudel</a><br>
+                  <span style="color: var(--text-dim);">راهنمای کامل با مثال‌های تعاملی</span>
+                </div>
+              </li>
+              <li>
+                <i class="fab fa-github"></i>
+                <div>
+                  <a href="https://github.com/tidalcycles/strudel" target="_blank">مخزن GitHub</a><br>
+                  <span style="color: var(--text-dim);">سورس کد و گزارش باگ</span>
+                </div>
+              </li>
+            </ul>
+          </div>
 
-                    <div class="card">
-                        <h4 class="card-title">ویدیوهای آموزشی</h4>
-                        <ul class="feature-list">
-                            <li>
-                                <i class="fab fa-youtube"></i>
-                                <div>
-                                    <a href="https://www.youtube.com/playlist?list=PLdOQy9J1Y2KzX8Z0Xz2Y7Z8Z9Z0Z1Z2Z3" target="_blank">Strudel Tutorials</a><br>
-                                    <span style="color: var(--text-dim);">مجموعه ویدیوهای آموزشی</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+          <div class="card">
+            <h4 class="card-title">ویدیوهای آموزشی</h4>
+            <ul class="feature-list">
+              <li>
+                <i class="fab fa-youtube"></i>
+                <div>
+                  <a href="https://www.youtube.com/playlist?list=PLdOQy9J1Y2KzX8Z0Xz2Y7Z8Z9Z0Z1Z2Z3" target="_blank">Strudel Tutorials</a><br>
+                  <span style="color: var(--text-dim);">مجموعه ویدیوهای آموزشی</span>
+                </div>
+              </li>
+            </ul>
+          </div>
 
-                    <div class="card">
-                        <h4 class="card-title">ابزارهای مرتبط</h4>
-                        <ul class="feature-list">
-                            <li>
-                                <i class="fas fa-code"></i>
-                                <div>
-                                    <a href="https://tidalcycles.org" target="_blank">TidalCycles</a><br>
-                                    <span style="color: var(--text-dim);">منبع الهام Strudel</span>
-                                </div>
-                            </li>
-                            <li>
-                                <i class="fas fa-music"></i>
-                                <div>
-                                    <a href="https://tonejs.github.io" target="_blank">Tone.js</a><br>
-                                    <span style="color: var(--text-dim);">موتور صوتی Strudel</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
+          <div class="card">
+            <h4 class="card-title">ابزارهای مرتبط</h4>
+            <ul class="feature-list">
+              <li>
+                <i class="fas fa-code"></i>
+                <div>
+                  <a href="https://tidalcycles.org" target="_blank">TidalCycles</a><br>
+                  <span style="color: var(--text-dim);">منبع الهام Strudel</span>
+                </div>
+              </li>
+              <li>
+                <i class="fas fa-music"></i>
+                <div>
+                  <a href="https://tonejs.github.io" target="_blank">Tone.js</a><br>
+                  <span style="color: var(--text-dim);">موتور صوتی Strudel</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </section>
 
-                <!-- Tips -->
-                <section class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-lightbulb"></i>
-                        نکات و ترفندها
-                    </h2>
+        <!-- Tips -->
+        <section class="section">
+          <h2 class="section-title">
+            <i class="fas fa-lightbulb"></i>
+            نکات و ترفندها
+          </h2>
 
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <div>
-                            <strong>نکته ۱:</strong> از <code>setBPM(120)</code> برای تنظیم سرعت کلی استفاده کنید.
-                        </div>
-                    </div>
+          <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>نکته ۱:</strong> از <code>setBPM(120)</code> برای تنظیم سرعت کلی استفاده کنید.
+            </div>
+          </div>
 
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <div>
-                            <strong>نکته ۲:</strong> با <code>Ctrl+Click</code> روی پترن، آن را به صورت جداگانه اجرا کنید.
-                        </div>
-                    </div>
+          <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>نکته ۲:</strong> با <code>Ctrl+Click</code> روی پترن، آن را به صورت جداگانه اجرا کنید.
+            </div>
+          </div>
 
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <div>
-                            <strong>نکته ۳:</strong> از <code>register()</code> برای ساخت توابع سفارشی استفاده کنید.
-                        </div>
-                    </div>
-                </section>
-            </main>
-        </div>
+          <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>نکته ۳:</strong> از <code>register()</code> برای ساخت توابع سفارشی استفاده کنید.
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
+  </div>
 
-    <!-- Floating Button -->
-    <div class="floating-btn">
-        <a href="https://hutara-strudel.vercel.app/#JDogbm90ZSgiPGMzIGViIGczIGJiPio0Iikuc291bmQoInNpbmUiKSAgCiAgLmNwcygxLjUpIC8vQlBNCiAgCiAgLmJwZihwZXJsaW4ucmFuZ2UoMzAwLDIwMDApLnNsb3coMTYpKQogIC5hZHNyKCIuMSIpCiAgLnBkZWNheSgiPDAgLjEgLjI1IC41PiIpCiAgLmZtKCI8MyAxPiIpLmZhc3QoMikuZm1oKCI8MC41IDEgMiA0IDYgOCA3IDUgMyAxID4iKQogIC5kZWxheSgwLjUpLmRlbGF5dGltZSguMjUpCiAgLmp1eEJ5KC41LHJldikKICAvLy5zb21ldGltZXMoYWRkKG5vdGUoMikpKQogIC8vLnBlbnYoMTIpLnBhbmNob3IoIjwwIC41IDEgLjU%2BKjIiKQogIC5yb29tKDEpLnJscCg1MDAwKS5yZmFkZSguMjUpCiAgCiAgLl9zY29wZSgpLl9waXRjaHdoZWVsKCkuc3BpcmFsKHsgc3RlYWR5OiAuOTYgfSk%3D" target="_blank" class="btn btn-webapp">
-            <i class="fas fa-play"></i>
-            Strudel REPL
-        </a>
+  <!-- Floating Button -->
+  <div class="floating-btn">
+    <a href="https://hutara-strudel.vercel.app/#JDogbm90ZSgiPGMzIGViIGczIGJiPio0Iikuc291bmQoInNpbmUiKSAgCiAgLmNwcygxLjUpIC8vQlBNCiAgCiAgLmJwZihwZXJsaW4ucmFuZ2UoMzAwLDIwMDApLnNsb3coMTYpKQogIC5hZHNyKCIuMSIpCiAgLnBkZWNheSgiPDAgLjEgLjI1IC41PiIpCiAgLmZtKCI8MyAxPiIpLmZhc3QoMikuZm1oKCI8MC41IDEgMiA0IDYgOCA3IDUgMyAxID4iKQogIC5kZWxheSgwLjUpLmRlbGF5dGltZSguMjUpCiAgLmp1eEJ5KC41LHJldikKICAvLy5zb21ldGltZXMoYWRkKG5vdGUoMikpKQogIC8vLnBlbnYoMTIpLnBhbmNob3IoIjwwIC41IDEgLjU%2BKjIiKQogIC5yb29tKDEpLnJscCg1MDAwKS5yZmFkZSguMjUpCiAgCiAgLl9zY29wZSgpLl9waXRjaHdoZWVsKCkuc3BpcmFsKHsgc3RlYWR5OiAuOTYgfSk%3D" target="_blank" class="btn btn-webapp">
+      <i class="fas fa-play"></i>
+      Strudel REPL
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>درباره Strudel</h3>
+        <p style="color: var(--text-dim); line-height: 1.8;">
+          Strudel یک محیط لایوکدینگ موسیقی مبتنی بر وب است که از الگوی TidalCycles الهام گرفته و با جاوااسکریپت کار می‌کند.
+        </p>
+      </div>
+      <div class="footer-section">
+        <h3>لینک‌های سریع</h3>
+        <ul>
+          <li><a href="#getting-started">شروع</a></li>
+          <li><a href="#patterns">پترن‌ها</a></li>
+          <li><a href="#examples">مثال‌ها</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>منابع</h3>
+        <ul>
+          <li><a href="https://strudel.cc" target="_blank">وب‌سایت</a></li>
+          <li><a href="https://strudel.cc/learn" target="_blank">آموزش</a></li>
+          <li><a href="https://github.com/tidalcycles/strudel" target="_blank">GitHub</a></li>
+        </ul>
+      </div>
     </div>
+    <div class="footer-bottom">
+      <p>ساخته شده با ❤️ برای جامعه لایوکدینگ | آخرین به‌روزرسانی: نوامبر ۲۰۲۵</p>
+    </div>
+  </footer>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>درباره Strudel</h3>
-                <p style="color: var(--text-dim); line-height: 1.8;">
-                    Strudel یک محیط لایوکدینگ موسیقی مبتنی بر وب است که از الگوی TidalCycles الهام گرفته و با جاوااسکریپت کار می‌کند.
-                </p>
-            </div>
-            <div class="footer-section">
-                <h3>لینک‌های سریع</h3>
-                <ul>
-                    <li><a href="#getting-started">شروع</a></li>
-                    <li><a href="#patterns">پترن‌ها</a></li>
-                    <li><a href="#examples">مثال‌ها</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>منابع</h3>
-                <ul>
-                    <li><a href="https://strudel.cc" target="_blank">وب‌سایت</a></li>
-                    <li><a href="https://strudel.cc/learn" target="_blank">آموزش</a></li>
-                    <li><a href="https://github.com/tidalcycles/strudel" target="_blank">GitHub</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>ساخته شده با ❤️ برای جامعه لایوکدینگ | آخرین به‌روزرسانی: نوامبر ۲۰۲۵</p>
-        </div>
-    </footer>
-
-    <script>
-        // Matrix Background Script
-        const MatrixBackground = (() => {
-            const config = {
-                matrixColor: '#00ffff',
-                fontSize: 13,
-                columnSpacing: 15,
-                animationSpeed: 500 / 30,
-                fadeSpeed: 0.02,
-                glowIntensity: 3,
-                characterSet: 'mixed'
-            };
-
-            const canvas = document.getElementById('matrix-bg');
-            let ctx;
-            try {
-                ctx = canvas.getContext('2d');
-                if (!ctx) throw new Error('Canvas context not supported');
-            } catch (e) {
-                console.error('Matrix Background Error:', e);
-                return { init: () => {}, updateConfig: () => {}, getConfig: () => ({}) };
-            }
-
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
-
-            const charSets = {
-                mixed: 'アイウエオカキクケ⛧コサシスセソタチツテトナニ⛥ヌネノハヒフヘホマミムメモヤ⸸ユヨラリルレロワψヲンABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*',
-                binary: '01',
-                katakana: 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン',
-                latin: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-            };
-
-            const characters = charSets[config.characterSet] || charSets.mixed;
-            const columnWidth = config.fontSize + config.columnSpacing;
-            let columns = Math.floor(width / columnWidth);
-            const drops = [];
-            for (let i = 0; i < columns; i++) {
-                drops[i] = Math.random() * -height / config.fontSize;
-            }
-
-            const trails = [];
-            for (let i = 0; i < columns; i++) {
-                trails[i] = [];
-            }
-
-            function draw() {
-                ctx.fillStyle = `rgba(0, 0, 0, ${config.fadeSpeed})`;
-                ctx.fillRect(0, 0, width, height);
-
-                ctx.font = `${config.fontSize}px monospace`;
-
-                for (let i = 0; i < drops.length; i++) {
-                    const char = characters[Math.floor(Math.random() * characters.length)];
-                    const x = i * columnWidth;
-                    const y = drops[i] * config.fontSize;
-
-                    if (trails[i].length > 15) {
-                        trails[i].shift();
-                    }
-                    trails[i].push({ x, y, char });
-
-                    trails[i].forEach((point, index) => {
-                        const opacity = (index + 1) / trails[i].length;
-                        if (index === trails[i].length - 1) {
-                            ctx.shadowBlur = config.glowIntensity;
-                            ctx.shadowColor = config.matrixColor;
-                            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-                        } else {
-                            ctx.shadowBlur = 0;
-                            const rgb = hexToRgb(config.matrixColor);
-                            ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity * 0.7})`;
-                        }
-                        ctx.fillText(point.char, point.x, point.y);
-                    });
-
-                    ctx.shadowBlur = 0;
-                    drops[i]++;
-
-                    if (drops[i] * config.fontSize > height && Math.random() > 0.98) {
-                        drops[i] = Math.random() * -height / config.fontSize;
-                        trails[i] = [];
-                    }
-                }
-
-                requestAnimationFrame(draw);
-            }
-
-            function hexToRgb(hex) {
-                const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-                hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
-                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                return result ? {
-                    r: parseInt(result[1], 16),
-                    g: parseInt(result[2], 16),
-                    b: parseInt(result[3], 16)
-                } : { r: 0, g: 255, b: 255 };
-            }
-
-            function handleResize() {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-                const newColumns = Math.floor(width / columnWidth);
-                if (newColumns > columns) {
-                    for (let i = columns; i < newColumns; i++) {
-                        drops[i] = Math.random() * -height / config.fontSize;
-                        trails[i] = [];
-                    }
-                } else if (newColumns < columns) {
-                    drops.length = newColumns;
-                    trails.length = newColumns;
-                }
-                columns = newColumns;
-            }
-
-            return {
-                init: function() {
-                    window.addEventListener('resize', handleResize);
-                    requestAnimationFrame(draw);
-                }
-            };
-        })();
-
-        window.addEventListener('load', () => {
-            try {
-                MatrixBackground.init();
-            } catch (e) {
-                console.error('Failed to initialize Matrix Background:', e);
-            }
+  <script>
+    // Matrix Background
+    const matrix = () => {
+      const canvas = document.getElementById('matrix-bg');
+      const ctx = canvas.getContext('2d');
+      let width, height, drops = [];
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
+      const resize = () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        const colWidth = 15;
+        drops = Array.from({ length: Math.floor(width / colWidth) }, () => Math.random() * -height / 13);
+      };
+      const draw = () => {
+        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#0ff';
+        ctx.font = '13px monospace';
+        drops.forEach((drop, i) => {
+          const char = chars[Math.floor(Math.random() * chars.length)];
+          ctx.fillText(char, i * 15, drop * 13);
+          if (drop * 13 > height && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
         });
+        requestAnimationFrame(draw);
+      };
+      resize();
+      window.addEventListener('resize', resize);
+      draw();
+    };
+    matrix();
 
-        // Progress Bar
-        window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            document.getElementById('progressBar').style.width = scrolled + '%';
-        });
+    // Progress Bar
+    window.addEventListener('scroll', () => {
+      const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+      document.getElementById('progressBar').style.width = scrolled + '%';
+    });
 
-        // Copy Code
-        function copyCode(button) {
-            const codeBlock = button.closest('.code-container').querySelector('pre code');
-            const text = codeBlock.textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                const originalHTML = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-check"></i> کپی شد!';
-                button.style.background = 'var(--accent-green)';
-                button.style.color = 'var(--bg-primary)';
-                setTimeout(() => {
-                    button.innerHTML = originalHTML;
-                    button.style.background = '';
-                    button.style.color = '';
-                }, 2000);
-            });
+    // Copy Code
+    window.copyCode = (btn) => {
+      const code = btn.closest('.code-container').querySelector('pre code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> کپی شد!';
+        btn.style.background = 'var(--accent-green)';
+        btn.style.color = 'var(--bg-primary)';
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 2000);
+      });
+    };
+
+    // Hamburger Menu
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('hamburger').classList.toggle('active');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    // TOC Toggle
+    document.getElementById('tocToggle').addEventListener('click', () => {
+      document.getElementById('toc').classList.toggle('open');
+      const icon = document.querySelector('#tocToggle i');
+      icon.classList.toggle('fa-chevron-down');
+      icon.classList.toggle('fa-chevron-up');
+    });
+
+    // Smooth Scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(anchor.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (document.getElementById('mobileMenu').classList.contains('open')) {
+            document.getElementById('hamburger').click();
+          }
         }
-
-        // Mobile Menu Toggle
-        const hamburger = document.getElementById('hamburger');
-        const mobileMenu = document.getElementById('mobileMenu');
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            mobileMenu.classList.toggle('open');
-        });
-
-        // TOC Toggle
-        const tocToggle = document.getElementById('tocToggle');
-        const toc = document.getElementById('toc');
-        if (tocToggle) {
-            tocToggle.addEventListener('click', () => {
-                toc.classList.toggle('open');
-                const icon = tocToggle.querySelector('i');
-                icon.classList.toggle('fa-chevron-down');
-                icon.classList.toggle('fa-chevron-up');
-            });
-        }
-
-        // Active Section Highlighting
-        const sections = document.querySelectorAll('.section');
-        const tocLinks = document.querySelectorAll('.toc-list a');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const id = entry.target.id;
-                    tocLinks.forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${id}`) {
-                            link.classList.add('active');
-                        }
-                    });
-                }
-            });
-        }, { rootMargin: '-120px 0px -50% 0px' });
-        sections.forEach(section => observer.observe(section));
-
-        // Smooth Scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    if (mobileMenu.classList.contains('open')) {
-                        hamburger.classList.remove('active');
-                        mobileMenu.classList.remove('open');
-                    }
-                }
-            });
-        });
-    </script>
+      });
+    });
+  </script>
 </body>
 </html>
